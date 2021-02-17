@@ -3,6 +3,7 @@ package handler
 import (
 	"crowdfunding/helper"
 	"crowdfunding/user"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -23,8 +24,8 @@ func (h *userHandler) RegisterUser(c *gin.Context) {
 	if err != nil {
 		errors := helper.FormatValidationError(err)
 		errorMessage := gin.H{"errors": errors}
-
 		response := helper.APIResponse("Register account failed", http.StatusUnprocessableEntity, "error", errorMessage)
+
 		c.JSON(http.StatusUnprocessableEntity, response)
 		return
 	}
@@ -48,8 +49,8 @@ func (h *userHandler) Login(c *gin.Context) {
 	if err != nil {
 		errors := helper.FormatValidationError(err)
 		errorMessage := gin.H{"errors": errors}
-
 		response := helper.APIResponse("Login failed", http.StatusUnprocessableEntity, "error", errorMessage)
+
 		c.JSON(http.StatusUnprocessableEntity, response)
 		return
 	}
@@ -57,8 +58,8 @@ func (h *userHandler) Login(c *gin.Context) {
 	loggedInUser, err := h.userService.Login(input)
 	if err != nil {
 		errorMessage := gin.H{"errors": err.Error()}
-
 		response := helper.APIResponse("Login failed", http.StatusUnprocessableEntity, "error", errorMessage)
+
 		c.JSON(http.StatusUnprocessableEntity, response)
 		return
 	}
@@ -66,7 +67,6 @@ func (h *userHandler) Login(c *gin.Context) {
 	formatter := user.FormatUser(loggedInUser, "tokentokentokentokentoken")
 	response := helper.APIResponse("Successfully logged in", http.StatusOK, "success", formatter)
 	c.JSON(http.StatusOK, response)
-
 }
 
 func (h *userHandler) CheckEmailAvailability(c *gin.Context) {
@@ -76,8 +76,8 @@ func (h *userHandler) CheckEmailAvailability(c *gin.Context) {
 	if err != nil {
 		errors := helper.FormatValidationError(err)
 		errorMessage := gin.H{"errors": errors}
-
 		response := helper.APIResponse("Email check failed", http.StatusUnprocessableEntity, "error", errorMessage)
+
 		c.JSON(http.StatusUnprocessableEntity, response)
 		return
 	}
@@ -86,14 +86,12 @@ func (h *userHandler) CheckEmailAvailability(c *gin.Context) {
 	if err != nil {
 		errorMessage := gin.H{"errors": "Server error"}
 		response := helper.APIResponse("Email check failed", http.StatusUnprocessableEntity, "error", errorMessage)
+
 		c.JSON(http.StatusUnprocessableEntity, response)
 		return
 	}
 
-	data := gin.H{
-		"is_available": isEmailAvailable,
-	}
-
+	data := gin.H{"is_available": isEmailAvailable}
 	metaMessage := "Email has been taken"
 
 	if isEmailAvailable {
@@ -102,5 +100,39 @@ func (h *userHandler) CheckEmailAvailability(c *gin.Context) {
 
 	response := helper.APIResponse(metaMessage, http.StatusOK, "success", data)
 	c.JSON(http.StatusOK, response)
+}
 
+func (h *userHandler) UploadAvatar(c *gin.Context) {
+	file, err := c.FormFile("avatar")
+	data := gin.H{"is_uploaded": false}
+
+	if err != nil {
+		response := helper.APIResponse("Failed to upload avatar image", http.StatusBadRequest, "error", data)
+
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	userID := 1 //perlu JWT
+	path := fmt.Sprintf("images/%d-%s", userID, file.Filename)
+
+	err = c.SaveUploadedFile(file, path)
+	if err != nil {
+		response := helper.APIResponse("Failed to upload avatar image", http.StatusBadRequest, "error", data)
+
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	_, err = h.userService.SaveAvatar(userID, path)
+	if err != nil {
+		response := helper.APIResponse("Failed to upload avatar image", http.StatusBadRequest, "error", data)
+
+		c.JSON(http.StatusBadRequest, response)
+		return
+	}
+
+	data = gin.H{"is_uploaded": true}
+	response := helper.APIResponse("Avatar successfully uploaded", http.StatusOK, "success", data)
+	c.JSON(http.StatusOK, response)
 }
