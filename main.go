@@ -6,7 +6,6 @@ import (
 	"crowdfunding/handler"
 	"crowdfunding/helper"
 	"crowdfunding/user"
-	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -28,17 +27,8 @@ func main() {
 	userRepository := user.NewRepository(db)
 	campaignRepository := campaign.NewRepository(db)
 
-	asds, err := campaignRepository.FindByUserID(3)
-
-	for _, asd := range asds {
-		fmt.Println(asd.Name)
-		if len(asd.CampaignImages) > 0 {
-			fmt.Println(len(asd.CampaignImages))
-			fmt.Println(asd.CampaignImages[0].FileName)
-		}
-	}
-
 	userService := user.NewService(userRepository)
+	campaignService := campaign.NewService(campaignRepository)
 	authService := auth.NewService()
 
 	userHandler := handler.NewUserHandler(userService, authService)
