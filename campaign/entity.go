@@ -2,6 +2,8 @@ package campaign
 
 import (
 	"time"
+
+	"crowdfunding/user"
 )
 
 type Campaign struct {
@@ -18,6 +20,7 @@ type Campaign struct {
 	CreatedAt        time.Time
 	UpdatedAt        time.Time
 	CampaignImages   []CampaignImage
+	User             user.User
 }
 
 type CampaignImage struct {
